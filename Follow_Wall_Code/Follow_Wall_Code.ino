@@ -148,8 +148,8 @@ void loop() {
   else if ((distance <= target_d) && (distance >= lower_bound_d)) {
 
     if (total_angle > 0) {
-      int correction_factor = 2; //Due to inaccuracy, a 2 degree correction factor has to be introduced.
-      turn((-1 * total_angle) + correction_factor);
+ 
+      turn((-1 * total_angle));
       total_angle = 0;
     }
     
@@ -164,7 +164,7 @@ void loop() {
     Serial.print("Correcting direction because we are below");
     Serial.print(lower_bound_d);
     Serial.println("distance from the wall");
-    turn(-5);
+    turn(-3);
     rightservo.write(0);
     leftservo.write(180);
     delay(500);
