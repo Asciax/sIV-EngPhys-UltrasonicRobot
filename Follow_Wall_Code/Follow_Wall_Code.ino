@@ -11,9 +11,13 @@ Servo leftservo;
 Servo rightservo;  
 const int pingPin = 5; // Trigger Pin of Ultrasonic Sensor
 const int echoPin = 6; // Echo Pin of Ultrasonic Sensor
+const int target_d = 110; // Target Distance
+const int lower_bound_d = 95; // Distance at which the car needs readjusting.
 
-float angular_orientation_radians = 0;
-int hasTurn = 0;
+
+float angular_orientation_radians = 0; // Angular orientation of the car in radians. 0 = poiting straight to the right
+float total_angle = 0; // Total angle at which the car has turned.
+int d_buffer = 15; //Buffer for the turn_angle adjustment when the car gets closer to the target distance.
 
 void setup() {
   leftservo.attach(9);  
@@ -122,29 +126,45 @@ void loop() {
 
 
   Serial.print("Actual distance: ");
-  Serial.println(distance);
+  Serial.println(distance); 
+    
+  float turn_angle;
 
-  
+  if (distance > target_d) {
 
-
-
-  if (distance > 110) {
-    turn(10);
+    turn_angle = 10 * (distance/ (target_d + d_buffer));
+    turn(turn_angle);
+    
     rightservo.write(0);
     leftservo.write(180);
     delay(500);
-    hasTurn +=1;
-    Serial.print("hasTurn :");
-    Serial.println(hasTurn);
+    
+    total_angle += turn_angle;
+    Serial.print("Total Angle Turned :");
+    Serial.println(total_angle);
 
   }
 
-  else if (distance <= 110) {
+  else if ((distance <= target_d) && (distance >= lower_bound_d)) {
 
-    if (hasTurn > 0) {
-      turn(-10 * hasTurn -2);
-      hasTurn = 0;
+    if (total_angle > 0) {
+      int correction_factor = 2; //Due to inaccuracy, a 2 degree correction factor has to be introduced.
+      turn((-1 * total_angle) + correction_factor);
+      total_angle = 0;
     }
+    
+    rightservo.write(0);
+    leftservo.write(180);
+    delay(500);
+    
+  }
+
+  else if (distance < lower_bound_d) {
+    
+    Serial.print("Correcting direction because we are below");
+    Serial.print(lower_bound_d);
+    Serial.println("distance from the wall");
+    turn(-5);
     rightservo.write(0);
     leftservo.write(180);
     delay(500);
@@ -152,9 +172,6 @@ void loop() {
   rightservo.write(90);
   leftservo.write(90);
   delay(100);
-
-
-
 
 
 }
