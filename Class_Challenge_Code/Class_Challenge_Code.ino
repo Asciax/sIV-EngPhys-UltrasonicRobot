@@ -49,7 +49,7 @@ void setup() {
 
 void turn(float angle) {
 
-  float angular_period = 8.772;
+  float angular_period = 5.6;
   float angular_velocity_per_second = 2*M_PI/ angular_period;
   float rad_angle = (angle/360) *(2*M_PI);
   
@@ -62,8 +62,8 @@ void turn(float angle) {
 
     //Serial.println("angular time is positive");
 
-    leftservo.write(30);
-    rightservo.write(30);
+    leftservo.write(0);
+    rightservo.write(0);
     delay(angular_time*1000);
 
     //Serial.print("delay left = ");
@@ -80,8 +80,8 @@ void turn(float angle) {
     //Serial.println("angular time is negative");
     //Serial.println(angular_time,4);
 
-    leftservo.write(150);
-    rightservo.write(150);
+    leftservo.write(180);
+    rightservo.write(180);
     delay(abs(angular_time*1000));
 
     //Serial.print("delay right = ");
