@@ -32,7 +32,8 @@ void setup() {
 }
 
 float angle(float position) {
-  return (position-110)*(-1.8)*pow(M_E,(-1/200)*pow(position-110,2))/M_PI;
+  float a = (position-110)*(-1.8)*pow(M_E,(-1/200)*pow(position-110,2))/M_PI;
+  return a;
 }
 
 float delay_func(float orientation) {
@@ -120,8 +121,12 @@ void loop() {
     distance = u_s_distance;
   }
 
-  else if (angular_orientation_radians != 0 ) {
-    distance =  (cosf(angular_orientation_radians) * u_s_distance);
+  else if (angular_orientation_radians > 0) {
+    distance =  (cosf(angular_orientation_radians-((15/360)*2*M_PI)) * u_s_distance);
+  }
+
+  else if (angular_orientation_radians < 0) {
+    distance = (cosf(abs(angular_orientation_radians)-((15/360)*2*M_PI)) * u_s_distance);
   }
 
   // Serial.print("Actual distance: ");

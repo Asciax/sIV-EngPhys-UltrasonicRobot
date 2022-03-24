@@ -28,6 +28,9 @@ bool angular_correction = false; // Variable used to set the angular position in
 float u_s_distance; // Distance detected by the ultrasonic sensor
 float distance; // Calculated shortest distance from the wall
 
+float angle(float position) {
+  return (position-target_d)*(-1.8)*pow(M_E,(-1/200)*pow((position-target_d),2))/M_PI;
+}
 
 void setup() {
   leftservo.attach(9);  
@@ -174,8 +177,7 @@ void loop() {
 
   if ((distance > target_d) && (distance < higher_bound_d )) {
     
-    int d_buffer = 15; //Buffer for the turn_angle adjustment when the car gets closer to the target distance.
-    float turn_angle = 10 * (distance/ (target_d + d_buffer));
+    float turn_angle = -angle(distance);
     turn(turn_angle);
     
     rightservo.write(0);
