@@ -52,7 +52,7 @@ void setup() {
 
 void turn(float angle) {
 
-  float angular_period = 8.772;
+  float angular_period = 5.6;
   float angular_velocity_per_second = 2*M_PI/ angular_period;
   float rad_angle = (angle/360) *(2*M_PI);
   
@@ -65,8 +65,8 @@ void turn(float angle) {
 
     //Serial.println("angular time is positive");
 
-    leftservo.write(30);
-    rightservo.write(30);
+    leftservo.write(0);
+    rightservo.write(0);
     delay(angular_time*1000);
 
     //Serial.print("delay left = ");
@@ -83,8 +83,8 @@ void turn(float angle) {
     //Serial.println("angular time is negative");
     //Serial.println(angular_time,4);
 
-    leftservo.write(150);
-    rightservo.write(150);
+    leftservo.write(180);
+    rightservo.write(180);
     delay(abs(angular_time*1000));
 
     //Serial.print("delay right = ");
@@ -176,15 +176,15 @@ void loop() {
 
 
   if ((distance > target_d) && (distance < higher_bound_d )) {
-    
     float turn_angle = -angle(distance);
-    turn(turn_angle);
+    if (abs(angular_orientation_radians)<1.570796327/2) {
+      turn(turn_angle);
+      total_angle += turn_angle;
+    }
     
     rightservo.write(0);
     leftservo.write(180);
     delay(500);
-    
-    total_angle += turn_angle;
     Serial.print("Total Angle Turned :");
     Serial.println(total_angle);
 
@@ -194,14 +194,14 @@ void loop() {
 
     if (total_angle > 0) {
    
-      turn((-1 * total_angle));
+      turn((-0.85 * total_angle));
       total_angle = 0;
 
     }
     
     rightservo.write(0);
     leftservo.write(180);
-    delay(1000);
+    delay(750);
     
   }
 
@@ -228,6 +228,31 @@ void loop() {
     turn(-90);
     turn_done = true;
     angular_correction = true;
+
+    rightservo.write(90);
+    leftservo.write(90);
+
+    digitalWrite(pingPin, LOW);
+    delayMicroseconds(2);
+
+    digitalWrite(pingPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(pingPin, LOW);
+
+    duration = pulseIn(echoPin, HIGH);
+
+    u_s_distance = duration*0.034/2;
+    delayMicroseconds(20);
+    if (u_s_distance > higher_bound_d) {
+      turn(90);
+      rightservo.write(0);
+      leftservo.write(180);
+      delay(4000);
+      turn(-90);
+      rightservo.write(0);
+      leftservo.write(180);
+      delay(4000);
+    }
   }
 
   Serial.print("Target distance: ");
