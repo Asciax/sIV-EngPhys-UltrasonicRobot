@@ -1,8 +1,3 @@
-// Class Challenge
-// by Caterev Robert, Ma Coty, Raharison Toky
-// 01-03-2022
-
-
 #define M_PI 3.141592653589793238462643383279
 #include <Servo.h>
 #include <math.h>
@@ -46,13 +41,15 @@ void setup() {
   leftservo.write(90);
   rightservo.write(90);
 
+  turn(90);
+
 
 }
 
 
 void turn(float angle) {
 
-  float angular_period = 5.6;
+  float angular_period = 1.65;
   float angular_velocity_per_second = 2*M_PI/ angular_period;
   float rad_angle = (angle/360) *(2*M_PI);
   
@@ -65,12 +62,16 @@ void turn(float angle) {
 
     //Serial.println("angular time is positive");
 
-    leftservo.write(0);
-    rightservo.write(0);
+    leftservo.write(50);
+    rightservo.write(50);
     delay(angular_time*1000);
 
     //Serial.print("delay left = ");
     //Serial.println(angular_time*1000);
+
+    leftservo.write(130);
+    rightservo.write(130);
+    delay(10);
 
     leftservo.write(90);
     rightservo.write(90);
@@ -83,12 +84,16 @@ void turn(float angle) {
     //Serial.println("angular time is negative");
     //Serial.println(angular_time,4);
 
-    leftservo.write(180);
-    rightservo.write(180);
+    leftservo.write(130);
+    rightservo.write(130);
     delay(abs(angular_time*1000));
 
     //Serial.print("delay right = ");
     //Serial.println(abs(angular_time*1000));
+
+    leftservo.write(50);
+    rightservo.write(50);
+    delay(10);
 
     leftservo.write(90);
     rightservo.write(90);
@@ -156,110 +161,5 @@ void loop() {
 
   Serial.print("Sensor distance: ");
   Serial.println(u_s_distance);
-
-
-  // Calling distances_assignment to assign the correct distances
-  distances_assignment(turned_Wall);
-
-  if (turn_done == true) {
-    if (angular_correction == true) {
-      angular_orientation_radians += 1.570796327;
-      angular_correction = false;
-    }
-
-  }
-  // Calling the function that determines the true distance from the wall
-  true_distance(angular_orientation_radians);
-  
-  Serial.print("Actual distance: ");
-  Serial.println(distance);
-
-
-  if ((distance > target_d) && (distance < higher_bound_d )) {
-    float turn_angle = -angle(distance);
-    if (abs(angular_orientation_radians)<1.570796327/2) {
-      turn(turn_angle);
-      total_angle += turn_angle;
-    }
-    
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(500);
-    Serial.print("Total Angle Turned :");
-    Serial.println(total_angle);
-
-  }
-
-  else if ((distance <= target_d) && (distance >= lower_bound_d)) {
-
-    if (total_angle > 0) {
-   
-      turn((-0.85 * total_angle));
-      total_angle = 0;
-
-    }
-    
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(750);
-    
-  }
-
-  else if ((distance < lower_bound_d) && (distance > 0)) {
-    
-    Serial.print("Correcting direction because we are below ");
-    Serial.print(lower_bound_d);
-    Serial.println(" distance from the wall");
-    turn(-3 * (((-9 / 4900)* pow(distance, 2))+10));
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(1000);
-  }
-
-  else if ((higher_bound_d <= distance) || (distance == 0)) {
-    turned_Wall = true;
-  }
-
-  if ((turned_Wall == true) && (turn_done == false)) {
-    
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(1000);
-    turn(-90);
-    turn_done = true;
-    angular_correction = true;
-
-    rightservo.write(90);
-    leftservo.write(90);
-
-    digitalWrite(pingPin, LOW);
-    delayMicroseconds(2);
-
-    digitalWrite(pingPin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(pingPin, LOW);
-
-    duration = pulseIn(echoPin, HIGH);
-
-    u_s_distance = duration*0.034/2;
-    delayMicroseconds(20);
-    if (u_s_distance > higher_bound_d) {
-      turn(90);
-      rightservo.write(0);
-      leftservo.write(180);
-      delay(4000);
-      turn(-90);
-      rightservo.write(0);
-      leftservo.write(180);
-      delay(4000);
-    }
-  }
-
-  Serial.print("Target distance: ");
-  Serial.println(target_d);
-
-  rightservo.write(90);
-  leftservo.write(90);
-
 
 }

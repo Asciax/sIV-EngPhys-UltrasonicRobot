@@ -12,8 +12,9 @@ Servo rightservo;
 const int pingPin = 5; // Trigger Pin of Ultrasonic Sensor
 const int echoPin = 6; // Echo Pin of Ultrasonic Sensor
 
-const int target_d_1 = 110; // Target distance from the first wall.
-const int target_d_2 = 70;  // Target distance from the second wall.
+const int target_d_1 = 50; // Target distance from the first wall.
+const int target_d_2 = 20;  // Target distance from the second wall.
+const int target_d_3 = 20; // Target distance from the third wall.
 int target_d; // Target distance that the car currently tries to achieve.
 int lower_bound_d; // Distance at which the car needs readjusting.
 int higher_bound_d; // Distance at which the car assumes there is no wall.
@@ -22,7 +23,8 @@ float angular_orientation_radians = 0; // Angular orientation of the car in radi
 float total_angle = 0; // Total angle at which the car has turned.
 
 bool turned_Wall = false; // Variable used to indicate that the robot must perform the turn when a gap is detected in the wall
-bool turn_done = false;  // Variable used to prevent the car from turning more than once in case it detects a high distance again.
+bool turn_done_1 = false;  // Variable used to indicate whether the first turn was completed
+bool turn_done_2 = false; // Variable used to indicate whether the second turn was completed
 bool angular_correction = false; // Variable used to set the angular position in radians of DOWNWARDS as 0 when the car has turned, in order for the code to work for the second part
 
 float u_s_distance; // Distance detected by the ultrasonic sensor
@@ -31,6 +33,7 @@ float distance; // Calculated shortest distance from the wall
 float angle(float position) {
   return (position-target_d)*(-1.8)*pow(M_E,(-1/200)*pow((position-target_d),2))/M_PI;
 }
+
 
 void setup() {
   leftservo.attach(9);  
@@ -52,7 +55,7 @@ void setup() {
 
 void turn(float angle) {
 
-  float angular_period = 5.6;
+  float angular_period = 1.65;
   float angular_velocity_per_second = 2*M_PI/ angular_period;
   float rad_angle = (angle/360) *(2*M_PI);
   
@@ -65,13 +68,17 @@ void turn(float angle) {
 
     //Serial.println("angular time is positive");
 
-    leftservo.write(0);
-    rightservo.write(0);
+    leftservo.write(50);
+    rightservo.write(50);
     delay(angular_time*1000);
 
     //Serial.print("delay left = ");
     //Serial.println(angular_time*1000);
 
+    leftservo.write(130);
+    rightservo.write(130);
+    delay(10);
+    
     leftservo.write(90);
     rightservo.write(90);
     delay(10);
@@ -83,12 +90,16 @@ void turn(float angle) {
     //Serial.println("angular time is negative");
     //Serial.println(angular_time,4);
 
-    leftservo.write(180);
-    rightservo.write(180);
+    leftservo.write(130);
+    rightservo.write(130);
     delay(abs(angular_time*1000));
 
     //Serial.print("delay right = ");
     //Serial.println(abs(angular_time*1000));
+
+    leftservo.write(50);
+    rightservo.write(50);
+    delay(10);
 
     leftservo.write(90);
     rightservo.write(90);
@@ -103,16 +114,21 @@ void turn(float angle) {
 
 
 //Function for determining constants depending on whether car has turned to second wall or not
-void distances_assignment(bool turned) {
-   if (turned == false) { // If the car is trying to collect coins located parallel to the first wall
+void distances_assignment(bool turned1, bool turned2) {
+   if (turned1 == false) { // If the car is trying to collect coins located parallel to the first wall
      target_d = target_d_1;
-     lower_bound_d = (target_d_1 - 25);
-     higher_bound_d = (target_d_1 + 125);
+     lower_bound_d = (target_d_1 - 10);
+     higher_bound_d = (target_d_1 + 100);
   }
-  else if (turned == true) { // If the car is trying to collect coins parallel to the second wall
+  else if ((turned1 == true) && (turned2 == false)) { // If the car is trying to collect coins parallel to the second wall
     target_d = target_d_2;
-    lower_bound_d = (target_d_2 - 25);
-    higher_bound_d = (target_d_2 + 125);
+    lower_bound_d = (target_d_2 - 10);
+    higher_bound_d = (target_d_2 + 80);
+  }
+  else if ((turned1 == true) && (turned2 == true)) {
+    target_d = target_d_3;
+    lower_bound_d = (target_d_3 - 10);
+    higher_bound_d = (target_d_3 + 80);
   }
 }
 
@@ -159,15 +175,25 @@ void loop() {
 
 
   // Calling distances_assignment to assign the correct distances
-  distances_assignment(turned_Wall);
+  distances_assignment(turn_done_1, turn_done_2);
 
-  if (turn_done == true) {
+  if (turn_done_1 == true) {
+    turned_Wall = false;
     if (angular_correction == true) {
       angular_orientation_radians += 1.570796327;
       angular_correction = false;
     }
 
   }
+
+    if (turn_done_2 == true) {
+    if (angular_correction == true) {
+      angular_orientation_radians += 1.570796327;
+      angular_correction = false;
+    }
+
+  }
+  
   // Calling the function that determines the true distance from the wall
   true_distance(angular_orientation_radians);
   
@@ -176,15 +202,16 @@ void loop() {
 
 
   if ((distance > target_d) && (distance < higher_bound_d )) {
-    float turn_angle = -angle(distance);
-    if (abs(angular_orientation_radians)<1.570796327/2) {
-      turn(turn_angle);
-      total_angle += turn_angle;
-    }
+    
+    float turn_angle = 10 * ((distance - target_d) / 10);
+    turn(turn_angle);
+    delay(50);
     
     rightservo.write(0);
     leftservo.write(180);
-    delay(500);
+    delay(400);
+    
+    total_angle += turn_angle;
     Serial.print("Total Angle Turned :");
     Serial.println(total_angle);
 
@@ -194,14 +221,14 @@ void loop() {
 
     if (total_angle > 0) {
    
-      turn((-0.85 * total_angle));
+      turn((-1 * total_angle)+10);
       total_angle = 0;
 
     }
     
     rightservo.write(0);
     leftservo.write(180);
-    delay(750);
+    delay(1000);
     
   }
 
@@ -213,46 +240,36 @@ void loop() {
     turn(-3 * (((-9 / 4900)* pow(distance, 2))+10));
     rightservo.write(0);
     leftservo.write(180);
-    delay(1000);
+    delay(500);
   }
 
   else if ((higher_bound_d <= distance) || (distance == 0)) {
     turned_Wall = true;
   }
 
-  if ((turned_Wall == true) && (turn_done == false)) {
+  if ((turned_Wall == true) && (turn_done_1 == false)) {
     
     rightservo.write(0);
     leftservo.write(180);
-    delay(1000);
-    turn(-90);
-    turn_done = true;
-    angular_correction = true;
+    delay(700);
 
     rightservo.write(90);
     leftservo.write(90);
-
-    digitalWrite(pingPin, LOW);
-    delayMicroseconds(2);
-
-    digitalWrite(pingPin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(pingPin, LOW);
-
-    duration = pulseIn(echoPin, HIGH);
-
-    u_s_distance = duration*0.034/2;
-    delayMicroseconds(20);
-    if (u_s_distance > higher_bound_d) {
-      turn(90);
-      rightservo.write(0);
-      leftservo.write(180);
-      delay(4000);
-      turn(-90);
-      rightservo.write(0);
-      leftservo.write(180);
-      delay(4000);
-    }
+    delay(100);
+    
+    turn(-90);
+    turn_done_1 = true;
+    angular_correction = true;
+    Serial.println("TURN 1 DONE");
+  }
+  else if ((turned_Wall == true) && (turn_done_2 == false)) {;
+    turn(-90);
+    rightservo.write(0);
+    leftservo.write(180);
+    delay(700);
+    turn_done_2 = true;
+    angular_correction = true;
+    Serial.println("TURN 2 DONE");
   }
 
   Serial.print("Target distance: ");
@@ -260,6 +277,7 @@ void loop() {
 
   rightservo.write(90);
   leftservo.write(90);
+  delay(200);
 
 
 }

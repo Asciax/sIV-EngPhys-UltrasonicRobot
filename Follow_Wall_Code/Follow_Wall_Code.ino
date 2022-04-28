@@ -1,9 +1,5 @@
-// Follow the wall exercise
-// by Caterev Robert, Ma Coty, Raharison Toky
-// 01-03-2022
-
-
 #define M_PI 3.141592653589793238462643383279
+#define M_E 2.718281828459045235360287471352
 #include <Servo.h>
 #include <math.h>
 
@@ -11,13 +7,12 @@ Servo leftservo;
 Servo rightservo;  
 const int pingPin = 5; // Trigger Pin of Ultrasonic Sensor
 const int echoPin = 6; // Echo Pin of Ultrasonic Sensor
-const int target_d = 110; // Target Distance
-const int lower_bound_d = 95; // Distance at which the car needs readjusting.
+float distances[3];
+float kernel[] = {0.3333,0.3333,0.3333};
+int distances_counter = 0;
 
-
-float angular_orientation_radians = 0; // Angular orientation of the car in radians. 0 = poiting straight to the right
-float total_angle = 0; // Total angle at which the car has turned.
-int d_buffer = 15; //Buffer for the turn_angle adjustment when the car gets closer to the target distance.
+float angular_orientation_radians = 0;
+int hasTurn = 0;
 
 void setup() {
   leftservo.attach(9);  
@@ -36,10 +31,18 @@ void setup() {
 
 }
 
+float angle(float position) {
+  float a = (position-110)*(-1.8)*pow(M_E,(-1/200)*pow(position-110,2))/M_PI;
+  return a;
+}
+
+float delay_func(float orientation) {
+  return 0.5*pow(M_E,(-M_PI/4)*pow(orientation,2));
+}
 
 void turn(float angle) {
 
-  float angular_period = 8.772;
+  float angular_period = 5.970;
   float angular_velocity_per_second = 2*M_PI/ angular_period;
   float rad_angle = (angle/360) *(2*M_PI);
   
@@ -52,16 +55,16 @@ void turn(float angle) {
 
     //Serial.println("angular time is positive");
 
-    leftservo.write(30);
-    rightservo.write(30);
+    leftservo.write(0);
+    rightservo.write(0);
     delay(angular_time*1000);
 
     //Serial.print("delay left = ");
     //Serial.println(angular_time*1000);
 
-    leftservo.write(90);
-    rightservo.write(90);
-    delay(100);
+    // leftservo.write(90);
+    // rightservo.write(90);
+    // delay(100);
     //Serial.println("I finished turning left");
     angular_orientation_radians += rad_angle;
   }
@@ -70,21 +73,22 @@ void turn(float angle) {
     //Serial.println("angular time is negative");
     //Serial.println(angular_time,4);
 
-    leftservo.write(150);
-    rightservo.write(150);
+    leftservo.write(180);
+    rightservo.write(180);
     delay(abs(angular_time*1000));
 
     //Serial.print("delay right = ");
     //Serial.println(abs(angular_time*1000));
 
-    leftservo.write(90);
-    rightservo.write(90);
-    delay(100);
+    // leftservo.write(90);
+    // rightservo.write(90);
+    // delay(100);
 
     //Serial.println("I finished turning right");
   
     angular_orientation_radians += rad_angle;
   }
+  //Serial.println("The angular orientation is " + String(angular_orientation_radians));
 
 }
 
@@ -93,6 +97,7 @@ void loop() {
   long duration;
   float u_s_distance;
   float distance;
+  float avg_distance;
 
   digitalWrite(pingPin, LOW);
   delayMicroseconds(2);
@@ -105,11 +110,11 @@ void loop() {
 
   u_s_distance = duration*0.034/2;
 
-  Serial.print("Angular orientation of the car: ");
-  Serial.println(angular_orientation_radians);
+  // Serial.print("Angular orientation of the car: ");
+  // Serial.println(angular_orientation_radians);
 
-  Serial.print("Sensor distance: ");
-  Serial.println(u_s_distance);
+  // Serial.print("Sensor distance: ");
+  // Serial.println(u_s_distance);
 
 
   if (angular_orientation_radians == 0) {
@@ -124,54 +129,30 @@ void loop() {
     distance = (cosf(abs(angular_orientation_radians)-((15/360)*2*M_PI)) * u_s_distance);
   }
 
+  // Serial.print("Actual distance: ");
+  // Serial.println(distance);
 
-  Serial.print("Actual distance: ");
-  Serial.println(distance); 
-    
-  float turn_angle;
+  distances[distances_counter] = distance;
+  distances_counter = (distances_counter+1)%3;
 
-  if (distance > target_d) {
-
-    turn_angle = 10 * (distance/ (target_d + d_buffer));
-    turn(turn_angle);
-    
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(500);
-    
-    total_angle += turn_angle;
-    Serial.print("Total Angle Turned :");
-    Serial.println(total_angle);
-
-  }
-
-  else if ((distance <= target_d) && (distance >= lower_bound_d)) {
-
-    if (total_angle > 0) {
- 
-      turn((-1 * total_angle));
-      total_angle = 0;
+  for (byte i = 0; i < 3; i++) {
+    if (distances[i] == 0.0) {
+      avg_distance = distances[(distances_counter-1)%3];
+      break;
+    } else {
+      avg_distance += distances[i]*kernel[i];
     }
-    
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(500);
-    
   }
 
-  else if (distance < lower_bound_d) {
-    
-    Serial.print("Correcting direction because we are below");
-    Serial.print(lower_bound_d);
-    Serial.println("distance from the wall");
-    turn(-3);
-    rightservo.write(0);
-    leftservo.write(180);
-    delay(500);
-  }
-  rightservo.write(90);
-  leftservo.write(90);
-  delay(100);
+  Serial.println("Avg distance: ");
+  Serial.print(avg_distance);
 
+  float turn_in_deg = angle((distance+avg_distance)/2);
+  Serial.println("The robot should turn by " + String(turn_in_deg));
+
+  turn(-turn_in_deg);
+  rightservo.write(0);
+  leftservo.write(180);
+  delay(200);
 
 }
