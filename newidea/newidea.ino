@@ -19,34 +19,7 @@ void setup() {
   //setupt the pin modes  
   pinMode(pingPin, OUTPUT);
   pinMode(echoPin, INPUT);
-<<<<<<< HEAD:Follow_Wall_Code/newidea.ino
   stop();
-=======
-
-
-  long initDuration;
-
-  digitalWrite(pingPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(pingPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pingPin, LOW);
-  initDuration = pulseIn(echoPin, HIGH);
-  initDistance = initDuration*0.034/2;
-
-  Serial.print(" Initial Distance: ");
-  Serial.println(initDistance);
-
-  rightservo.write(0);
-  leftservo.write(180);
-  delay(2000);
-
-  rightservo.write(90);
-  leftservo.write(90);
-  //stop();
-  //turn(-90);
-  //stop();
->>>>>>> f494699c732485e35cff284d8b41efbaf126a2c7:newidea/newidea.ino
 }
 
 void move(int time) {
@@ -194,22 +167,9 @@ float straight_line(int time) {
 }
 
 void loop() {
-<<<<<<< HEAD:Follow_Wall_Code/newidea.ino
   // speed 45cm/s
   // angular speed 1.954768762 rad/s
   float angle = straight_line(1000);//the robot moves in a straight line for 1 second and we calculate the appropriate turn according to our logic
-=======
-  // 45cm/s
-  // 1.954768762 rad/s
-  // float distance = straight_distance();
-  // turn(90);
-  // Serial.println(distance);
-  // stop();
-  // move(2000);
-  // turn(-90);
-  // stop(); 
-  float angle = straight_line(750);
->>>>>>> f494699c732485e35cff284d8b41efbaf126a2c7:newidea/newidea.ino
   Serial.println(angle);
   turn(angle);//we make the correction given by our function
 }
