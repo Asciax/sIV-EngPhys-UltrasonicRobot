@@ -7,15 +7,46 @@ Servo leftservo;
 Servo rightservo;  
 const int pingPin = 5; // Trigger Pin of Ultrasonic Sensor
 const int echoPin = 6; // Echo Pin of Ultrasonic Sensor
+
+float initDistance;
+
+
 void setup() {
-  leftservo.attach(9);  
-  rightservo.attach(10);
+  leftservo.attach(10);  
+  rightservo.attach(9);
    //set up the Serial
   Serial.begin(9600);
   //setupt the pin modes  
   pinMode(pingPin, OUTPUT);
   pinMode(echoPin, INPUT);
+<<<<<<< HEAD:Follow_Wall_Code/newidea.ino
   stop();
+=======
+
+
+  long initDuration;
+
+  digitalWrite(pingPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pingPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(pingPin, LOW);
+  initDuration = pulseIn(echoPin, HIGH);
+  initDistance = initDuration*0.034/2;
+
+  Serial.print(" Initial Distance: ");
+  Serial.println(initDistance);
+
+  rightservo.write(0);
+  leftservo.write(180);
+  delay(2000);
+
+  rightservo.write(90);
+  leftservo.write(90);
+  //stop();
+  //turn(-90);
+  //stop();
+>>>>>>> f494699c732485e35cff284d8b41efbaf126a2c7:newidea/newidea.ino
 }
 
 void move(int time) {
@@ -50,8 +81,10 @@ void turn(float angle) {
   Returns: None
   */
 
-  float angular_period = 5.970;
-  float angular_velocity_per_second = 1.954768762;
+  float angular_period = 1.95;
+  //5.970;
+  float angular_velocity_per_second = 2*M_PI/ angular_period;
+  //1.954768762;
   float rad_angle = (angle/360) *(2*M_PI);
   
   //Serial.print("Rad_angle: ");
@@ -108,14 +141,29 @@ float straight_distance() {
   */
   long duration;
   stop();
-  digitalWrite(pingPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(pingPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pingPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  float distance = duration*0.034/2;
-  return distance;
+  float distanceArray[3] = {initDistance, initDistance, initDistance};
+
+  for (int i=0; i<=2; i++){
+    digitalWrite(pingPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(pingPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(pingPin, LOW);
+    duration = pulseIn(echoPin, HIGH);
+    float distance = duration*0.034/2;
+    Serial.print("Distance: ");
+    Serial.println(distance);
+    distanceArray[i] = distance;
+    Serial.println(distanceArray[i]);
+  }
+
+
+  Serial.println("Distance array: ");
+  Serial.println(distanceArray[0]);
+  Serial.println(distanceArray[1]);
+  Serial.println(distanceArray[2]);
+  float finalDistance = (distanceArray[0] + distanceArray[1] + distanceArray[2]) / 3 ;
+  return finalDistance;
 }
 
 float straight_line(int time) {
@@ -146,9 +194,22 @@ float straight_line(int time) {
 }
 
 void loop() {
+<<<<<<< HEAD:Follow_Wall_Code/newidea.ino
   // speed 45cm/s
   // angular speed 1.954768762 rad/s
   float angle = straight_line(1000);//the robot moves in a straight line for 1 second and we calculate the appropriate turn according to our logic
+=======
+  // 45cm/s
+  // 1.954768762 rad/s
+  // float distance = straight_distance();
+  // turn(90);
+  // Serial.println(distance);
+  // stop();
+  // move(2000);
+  // turn(-90);
+  // stop(); 
+  float angle = straight_line(750);
+>>>>>>> f494699c732485e35cff284d8b41efbaf126a2c7:newidea/newidea.ino
   Serial.println(angle);
   turn(angle);//we make the correction given by our function
 }
