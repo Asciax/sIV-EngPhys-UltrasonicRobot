@@ -16,22 +16,39 @@ void setup() {
   pinMode(pingPin, OUTPUT);
   pinMode(echoPin, INPUT);
   stop();
-  turn(-45);
-  stop();
 }
 
 void move(int time) {
+  /*
+  A function for moving the car in a straight line for a certain direction.
+  This can be convenient for calibration because we only have to change the speeds once.
+  Inputs:
+    time: time for moving forward (ms)
+  Returns: None
+  */
   rightservo.write(0);
   leftservo.write(180);
   delay(time);
 }
 
 void stop() {
+  /*
+  A function that stops the car for convenience
+  Inputs: None
+  Returns: None
+  */
   rightservo.write(90);
   leftservo.write(90);
 }
 
 void turn(float angle) {
+  /*
+  A function for turning the car by a certain degree.
+  This can be done by calculating the required delay from the angular velocity
+  Inputs:
+    angle: angle to turn by (degree)
+  Returns: None
+  */
 
   float angular_period = 5.970;
   float angular_velocity_per_second = 1.954768762;
@@ -83,6 +100,12 @@ void turn(float angle) {
 }
 
 float straight_distance() {
+  /*
+  A function for calculating the distance measured by the ultrasonic sensor
+  Inputs: None
+  Returns:
+    float: distance measured
+  */
   long duration;
   stop();
   digitalWrite(pingPin, LOW);
@@ -96,33 +119,36 @@ float straight_distance() {
 }
 
 float straight_line(int time) {
+  /*
+  A function for moving the car in a straight line for a certain direction and
+  calculate the correct angular correction
+  Inputs:
+    time: time for moving forward (ms)
+  Returns: 
+    float: the turn the robot should make in degrees
+  */
   float straight = time * 45/1000;
   float di;
   float df;
 
-  di = straight_distance();
-  move(time);
-  df = straight_distance();
+  di = straight_distance();//we first calculate the initial distance
+  move(time);//we move in a straight line
+  df = straight_distance();//we calculate the final distance
   //Serial.println(di-df);
-  float angle = atan((di-df)/straight)*(360/(2*M_PI));
+  float angle = atan((di-df)/straight)*(360/(2*M_PI));//we use some trigonometry to calculate the angle the robot makes relative to the wall
   if (df > 200) {
+    //if the distance is greater than 200cm (there's a gap) then the robot should make a(n almost) sharp turn
       return -90;
   } else {
+    //if the distance is not greater than 200cm then the robot should just correct its orientation to be parallel to the wall
       return angle;
   }
 }
 
 void loop() {
-  // 45cm/s
-  // 1.954768762 rad/s
-  // float distance = straight_distance();
-  // turn(90);
-  // Serial.println(distance);
-  // stop();
-  // move(2000);
-  // turn(-90);
-  // stop(); 
-  float angle = straight_line(1000);
+  // speed 45cm/s
+  // angular speed 1.954768762 rad/s
+  float angle = straight_line(1000);//the robot moves in a straight line for 1 second and we calculate the appropriate turn according to our logic
   Serial.println(angle);
-  turn(angle);
+  turn(angle);//we make the correction given by our function
 }
